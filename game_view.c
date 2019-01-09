@@ -17,14 +17,14 @@
 // #include "map.h" ... if you decide to use the Map ADT
 
 typedef struct game_view {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
 	// turn number
 	round_t round; 
 	// point score;
 	size_t score;
 	// player turn 
 	enum player playerTurn;
-	struct play plays[366][5];
+
+	struct player play[366][5];
 
 	// Dracula struct
 	struct dracula {
@@ -38,19 +38,19 @@ typedef struct game_view {
 		location_t location;
 		size_t health;
 		char *message;
-	}hunters[4];
+	} hunters[4];
 
 } game_view;
 
-// ask simm if memory mangement is a thing 
-//struct play {
-	typdef struct player {
-		location_t location;
-		char *move;
-		char *action;
-		char *message;
-	} player//[5]; 
-//} play;
+
+// array for each players previous turn
+typedef struct player {
+	location_t location;
+	char *move;
+	char *action;
+	char *message;
+} player;
+
 
 game_view *gv_new (char *past_plays, player_message messages[])
 {
