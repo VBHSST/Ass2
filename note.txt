@@ -1,1 +1,16 @@
-lol it works
+Assessment 2: Dracula
+
+~~Tasks~~
+Task1: 9/01/18
+
+	Anton	- complete new_gv []
+				- 
+			- consider blackbox/whitebox tests []
+
+	Eve		- instantiate map []
+				- add connections
+			- drop map []
+			- consider blackbox/whitebox tests []
+
+Due date: 7pm 10/01/18
+

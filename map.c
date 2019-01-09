@@ -27,12 +27,6 @@ typedef struct map {
 	} *connections[NUM_MAP_LOCATIONS]; // array of lists
 } map;
 
-static void add_connections (map *);
-static void add_connection (map *, location_t, location_t, transport_t);
-static inline bool is_sentinel_edge (connection);
-
-static map_adj *adjlist_insert (map_adj *, location_t, transport_t);
-static bool adjlist_contains (map_adj *, location_t, transport_t);
 
 // Create a new empty graph (for a map)
 // #Vertices always same as NUM_PLACES

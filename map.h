@@ -32,4 +32,11 @@ size_t map_nv (Map);
 /** Get the number of edges. */
 size_t map_ne (Map, transport_t);
 
+void add_connections (map *);
+void add_connection (map *, location_t, location_t, transport_t);
+inline bool is_sentinel_edge (connection);
+
+map_adj *adjlist_insert (map_adj *, location_t, transport_t);
+bool adjlist_contains (map_adj *, location_t, transport_t);
+
 #endif // !defined(FOD__MAP_H_)
