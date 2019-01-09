@@ -32,7 +32,6 @@ typedef struct game_view {
 	struct hunter {
 		location_t location;
 		size_t health;
-		char message[99];
 	} hunters[4];
 
 	// Dracula struct
@@ -50,6 +49,7 @@ typedef struct game_view {
 // array for each players previous turn
 typedef struct player {
 	location_t location; //current location and location they decided to move to
+	size_t health;
 	char encounter[4]; // max 4 for hunters
 	char action; 
 	char message[99]; // max 99
