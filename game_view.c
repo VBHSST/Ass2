@@ -16,6 +16,15 @@
 #include "game_view.h"
 #include "map.h" //... if you decide to use the Map ADT
 
+// array for each players previous turn
+typedef struct player {
+	location_t location[366]; //current location and location they decided to move to
+	size_t health;
+	char encounter[4]; // max 4 for hunters
+	char action; 
+	char message[99]; // max 99
+} player;
+
 typedef struct game_view {
 	// round number
 	round_t round; 
@@ -41,19 +50,15 @@ typedef struct game_view {
 		size_t health;
 	} dracula;
 
-	Map map; // need to figure out how to initialize this map in this file
+	//Map map; // need to figure out how to initialize this map in this file
 
 } game_view;
 
 
-// array for each players previous turn
-typedef struct player {
-	location_t location; //current location and location they decided to move to
-	size_t health;
-	char encounter[4]; // max 4 for hunters
-	char action; 
-	char message[99]; // max 99
-} player;
+// prototypes
+static location_t new_from(location_t location[], int i);
+static bool loc_unknown (location_t loc);
+
 
 
 game_view *gv_new (char *past_plays, player_message messages[])
@@ -101,7 +106,7 @@ game_view *gv_new (char *past_plays, player_message messages[])
 				// remove 16 points from the score
 				
 
-		// if hunters are in the smae city as last turn
+		// if hunters are in the same city as last turn
 			// restore health
 
 		// if a vampire was set more than 6 turns ago and wasnt vanquished
@@ -137,26 +142,25 @@ void gv_drop (game_view *gv)
 
 round_t gv_get_round (game_view *gv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv->round;
 }
 
 enum player gv_get_player (game_view *gv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv->turn;
 }
 
 int gv_get_score (game_view *gv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv->score;
 }
 
 int gv_get_health (game_view *gv, enum player player)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	if (player != PLAYER_DRACULA)
+		return gv->hunters[player]->health;
+	else 
+		return gv->dracula->health;
 }
 
 location_t gv_get_location (game_view *gv, enum player player)
@@ -177,7 +181,63 @@ location_t *gv_get_connections (
 	location_t from, enum player player, round_t round,
 	bool road, bool rail, bool sea)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+	if (gv == NULL) return NULL;
+
+	// if player is out of range
+	if (player < 0 || player > 4) return NULL;
+	if (round > gv_get_round(gv)) return NULL;
+
+	Map map = map_new();
+
+	// if the place is unknown
+	if (from < Adriatic_Sea || from > ZURICH) {
+		// update the place
+		from = new_from(gv->pastPlays[round][player].location, ZERO);
+	}
+
+
+
 	*n_locations = 0;
 	return NULL;
 }
+
+
+// help functions
+static location_t new_from(location_t location[], int i) {
+	location_t temp = location[i];
+
+	// if the location is unknown, make a new one according to cases
+	if (temp < Adriatic_Sea || temp > ZURICH) {
+		switch (temp){
+			case HIDE:
+				if(! loc_unknown(location[i+1])) 
+					return new_from(location, i+1);
+			case DOUBLE_BACK_1:                
+				if(! loc_unknown(location[i+1]))
+                    return new_from(location, i+1);
+			case DOUBLE_BACK_2:
+ 				if(! loc_unknown(location[i+2]))
+                    return new_from(location, i+2);				                
+			case DOUBLE_BACK_3:
+			    if(! loc_unknown(location[i+3]))
+                    return new_from(location, i+3);
+			case DOUBLE_BACK_4:
+			    if(! loc_unknown(location[i+4]))
+                    return new_from(location, i+4);
+			case DOUBLE_BACK_5:
+			    if(! loc_unknown(location[i+5]))
+                    return new_from(location, i+5);
+			case TELEPORT: return CASTLE_DRACULA; 			
+		}
+	}
+
+	return temp;
+}
+
+static bool loc_unknown (location_t loc) {
+    return (! (loc != CITY_UNKNOWN 
+	    	&& loc != SEA_UNKNOWN 
+	    	&& loc != UNKNOWN_LOCATION 
+	    	&& loc != NOWHERE));
+}
+
