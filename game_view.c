@@ -41,6 +41,7 @@ typedef struct game_view {
 	struct hunter {
 		location_t location;
 		size_t health;
+		location_t trap_location[6];
 	} hunters[4];
 
 	// Dracula struct
@@ -48,6 +49,7 @@ typedef struct game_view {
 		//TRAIL
 		location_t location;
 		size_t health;
+		location_t trap_location[6];
 	} dracula;
 
 	//Map map; // need to figure out how to initialize this map in this file
@@ -144,38 +146,59 @@ void gv_drop (game_view *gv)
 
 round_t gv_get_round (game_view *gv)
 {
+	assert(gv != NULL);
 	return gv->round;
 }
 
 enum player gv_get_player (game_view *gv)
 {
+	assert(gv != NULL);
 	return gv->turn;
 }
 
 int gv_get_score (game_view *gv)
 {
+	assert(gv != NULL);
 	return gv->score;
 }
 
 int gv_get_health (game_view *gv, enum player player)
 {
+	assert(gv != NULL);
+	assert((player >= PLAYER_LORD_GODALMING) && 
+			(player <= PLAYER_DRACULA));
+
 	if (player != PLAYER_DRACULA)
-		return gv->hunters[player]->health;
+		return gv->hunters[player].health;
 	else 
-		return gv->dracula->health;
+		return gv->dracula.health;
 }
 
 location_t gv_get_location (game_view *gv, enum player player)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	assert(gv != NULL);
+	assert((player >= PLAYER_LORD_GODALMING) && 
+			(player <= PLAYER_DRACULA));
+	if (player != PLAYER_DRACULA)
+		return gv->hunters[player].location;
+	else 
+		return gv->dracula.location;
 }
 
 void gv_get_history (
 	game_view *gv, enum player player,
 	location_t trail[TRAIL_SIZE])
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+	assert(gv != NULL);
+	assert((player >= PLAYER_LORD_GODALMING) && 
+			(player <= PLAYER_DRACULA));
+	
+	for (int i = 0; i < TRAIL_SIZE; i++) {
+		if (player != PLAYER_DRACULA)
+			trail[i] = gv->hunters[player].trap_location[i];
+		else 
+			trail[i] = gv->dracula.trap_location[i];
+    }	
 }
 
 location_t *gv_get_connections (
@@ -300,7 +323,8 @@ static int num_conn(Map map, location_t from,
                 BFS(map, curr->v, rails, conn, i);
             }
             if (sea == true && 
-            	curr->type == BOAT && location_get_type(from) != SEA) {
+            	curr->type == BOAT &&
+            	location_get_type(from) != SEA) {
 
                 conn[i++] = curr->v;
                 for (map_adj *curr2 = map->connections[conn[i-1]]; curr2 != NULL; curr2 = curr2->next) {
@@ -327,7 +351,8 @@ static void BFS(Map map, location_t from, int times, location_t conn[], int i) {
     while (!QueueIsEmpty(q)) {
         from = QueueLeave(q);
         times = QueueLeave(hop);
-        if (times == 0 || exist(from, conn, i))
+        if (times == 0 || 
+        	exist(from, conn, i))
             continue;
         conn[i++] = from;
         for (map_adj *curr = map->connections[from]; curr != NULL; curr = curr->next) {

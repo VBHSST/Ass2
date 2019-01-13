@@ -12,8 +12,10 @@ Task1: 9/01/18
 			- gv_get_player [Y]
 			- gv_get_score [Y]
 			- gv_get_health [Y]
+			- gv_get_location [Y]
+			- gv_get_history [Y] 
 			- gv_get_connections [Y]
-			- blackbox/whitebox tests []
+			- blackbox/whitebox tests [N]
 
 Due date: 7pm 10/01/18
 
