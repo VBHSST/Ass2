@@ -13,6 +13,7 @@
 
 #include "game.h"
 #include "places.h"
+#include "queue.h"
 
 typedef struct game_view *GameView;
 

@@ -18,8 +18,19 @@ typedef struct edge {
     transport_t type;
 } edge;
 
+struct map {
+	size_t n_vertices, n_edges;
+
+	struct map_adj {
+		location_t v;  // ALICANTE, etc
+		transport_t type; // ROAD, RAIL, BOAT
+		struct map_adj *next; // link to next node
+	} *connections[NUM_MAP_LOCATIONS]; // array of lists
+};
+
 // graph representation is hidden
 typedef struct map *Map;
+typedef struct map_adj map_adj;
 
 /** Create a new Map. */
 Map map_new (void);
@@ -32,9 +43,9 @@ size_t map_nv (Map);
 /** Get the number of edges. */
 size_t map_ne (Map, transport_t);
 
-void add_connections (map *);
-void add_connection (map *, location_t, location_t, transport_t);
-inline bool is_sentinel_edge (connection);
+void add_connections (Map);
+void add_connection (Map, location_t, location_t, transport_t);
+bool is_sentinel_edge (connection);
 
 map_adj *adjlist_insert (map_adj *, location_t, transport_t);
 bool adjlist_contains (map_adj *, location_t, transport_t);

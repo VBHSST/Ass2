@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "game_view.h"
+#include "queue.h"
 
 int main (void)
 {

@@ -17,15 +17,7 @@
 #include "places.h"
 
 typedef struct map_adj map_adj;
-typedef struct map {
-	size_t n_vertices, n_edges;
-
-	struct map_adj {
-		location_t v;  // ALICANTE, etc
-		transport_t type; // ROAD, RAIL, BOAT
-		struct map_adj *next; // link to next node
-	} *connections[NUM_MAP_LOCATIONS]; // array of lists
-} map;
+typedef struct map map;
 
 
 // Create a new empty graph (for a map)
@@ -103,7 +95,7 @@ size_t map_ne (map *g, transport_t type)
 }
 
 /// Add edges to Graph representing map of Europe
-static void add_connections (map *g)
+void add_connections (map *g)
 {
 	assert (g != NULL);
 
@@ -117,7 +109,7 @@ static void add_connections (map *g)
 
 
 /// Add a new edge to the Map/Graph
-static void add_connection (
+void add_connection (
 	map *g,
 	location_t start,
 	location_t end,
@@ -138,13 +130,13 @@ static void add_connection (
 }
 
 /// Is this the magic 'sentinel' edge?
-static inline bool is_sentinel_edge (connection x)
+bool is_sentinel_edge (connection x)
 {
 	return x.v == -1 && x.w == -1 && x.t == ANY;
 }
 
 /// Insert a node into an adjacency list.
-static map_adj *adjlist_insert (map_adj *list, location_t v, transport_t type)
+map_adj *adjlist_insert (map_adj *list, location_t v, transport_t type)
 {
 	assert (valid_location_p (v));
 	assert (valid_transport_p (type));
@@ -156,7 +148,7 @@ static map_adj *adjlist_insert (map_adj *list, location_t v, transport_t type)
 }
 
 /// Does this adjacency list contain a particular value?
-static bool adjlist_contains (map_adj *list, location_t v, transport_t type)
+bool adjlist_contains (map_adj *list, location_t v, transport_t type)
 {
 	assert (valid_location_p (v));
 	assert (valid_transport_p (type));
