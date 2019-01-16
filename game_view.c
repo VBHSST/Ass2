@@ -91,14 +91,15 @@ static void fill_in_dracula(char *past_plays, int index, game_view *new);
 	static void is_dracula_at_his_castle(game_view *new);
 	static void check_draculas_encounters(game_view *new, char *past_plays, int index);
 
-// map functions
+// map functions 
+/*
 static location_t new_from(location_t location[], int i);
 static bool loc_unknown (location_t loc);
 static int num_conn(Map g, LocationID start, PlayerID player, Round round, bool road, bool rail, bool sea);
 static void BFS(Map map, location_t from, int times, location_t conn[], int i);
 static bool exist (location_t curr, location_t trail[], int index);
 static void array_conn() (Map map, location_t from, location_t conn[], enum player player, round_t round, bool road, bool rail, bool sea);
-
+*/
 
 game_view *gv_new (char *past_plays, player_message messages[])
 {
@@ -542,6 +543,9 @@ location_t *gv_get_connections (
 {
 	if (gv == NULL) return NULL;
 
+	*n_locations = 0;
+	return NULL;
+	/*
 	// if player is out of range
 	if (player < 0 || player > 4) return NULL;
 	if (round > gv_get_round(gv)) return NULL;
@@ -564,10 +568,10 @@ location_t *gv_get_connections (
 	array_conn(map, from, conn, player, round, road, rail, sea);
 	map_drop(map);
 
-	return conn;
+	return conn;*/
 }
 
-
+/*
 // help functions
 
 // Give the new location if the current one is out of range
@@ -766,4 +770,4 @@ static void array_conn (Map map, location_t from,
             }
         }
     }
-}
+}*/
