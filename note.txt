@@ -7,10 +7,16 @@ Task1: 9/01/18
 				- 
 			- consider blackbox/whitebox tests []
 
-	Eve		- instantiate map []
-				- add connections
-			- drop map []
-			- consider blackbox/whitebox tests []
+	Eve		- gv_drop [N]
+			- gv_get_round [Y]
+			- gv_get_player [Y]
+			- gv_get_score [Y]
+			- gv_get_health [Y]
+			- gv_get_location [Y]
+			- gv_get_history [Y] 
+			- gv_get_connections [Y]
+			- blackbox/whitebox tests [N]
 
 Due date: 7pm 10/01/18
+
 
