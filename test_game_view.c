@@ -220,6 +220,117 @@ int main (void)
 			free (edges);
 		} while (0);
 
+		do {
+			puts ("Checking Castle Dracula road connections");
+			size_t n_edges;
+			location_t *edges = gv_get_connections (
+				gv, &n_edges,
+				CASTLE_DRACULA, PLAYER_LORD_GODALMING, 0,
+				true, false, false
+			);
+
+			bool seen[NUM_MAP_LOCATIONS] = {false};
+			for (size_t i = 0; i < n_edges; i++)
+				seen[edges[i]] = true;
+
+			assert (n_edges == 3);
+			assert (seen[CASTLE_DRACULA]);
+			assert (seen[KLAUSENBURG]);
+			assert (seen[GALATZ]);
+
+			free (edges);
+		} while (0);
+
+		do {
+			puts ("Checking Castle Dracula road connections");
+			size_t n_edges;
+			location_t *edges = gv_get_connections (
+				gv, &n_edges,
+				CASTLE_DRACULA, PLAYER_LORD_GODALMING, 0,
+				true, false, false
+			);
+
+			bool seen[NUM_MAP_LOCATIONS] = {false};
+			for (size_t i = 0; i < n_edges; i++)
+				seen[edges[i]] = true;
+
+			assert (n_edges == 3);
+			assert (seen[CASTLE_DRACULA]);
+			assert (seen[KLAUSENBURG]);
+			assert (seen[GALATZ]);
+
+			free (edges);
+		} while (0);
+
+		do {
+			puts ("Checking St.Joseph & St.Mary road connections");
+			size_t n_edges;
+			location_t *edges = gv_get_connections (
+				gv, &n_edges,
+				ST_JOSEPH_AND_ST_MARYS, PLAYER_LORD_GODALMING, 0,
+				true, false, false
+			);
+
+			bool seen[NUM_MAP_LOCATIONS] = {false};
+			for (size_t i = 0; i < n_edges; i++)
+				seen[edges[i]] = true;
+
+			assert (n_edges == 5);
+			assert (seen[ST_JOSEPH_AND_ST_MARYS]);
+			assert (seen[ZAGREB]);
+			assert (seen[SZEGED]);
+			assert (seen[SARAJEVO]);
+			assert (seen[BELGRADE])
+
+			free (edges);
+		} while (0);
+
+		do {
+			puts ("Checking St.Joseph & St.Mary road connections");
+			size_t n_edges;
+			location_t *edges = gv_get_connections (
+				gv, &n_edges,
+				ST_JOSEPH_AND_ST_MARYS, PLAYER_LORD_GODALMING, 0,
+				true, false, false
+			);
+
+			bool seen[NUM_MAP_LOCATIONS] = {false};
+			for (size_t i = 0; i < n_edges; i++)
+				seen[edges[i]] = true;
+
+			assert (n_edges == 5);
+			assert (seen[ST_JOSEPH_AND_ST_MARYS]);
+			assert (seen[ZAGREB]);
+			assert (seen[SZEGED]);
+			assert (seen[SARAJEVO]);
+			assert (seen[BELGRADE])
+
+			free (edges);
+		} while (0);
+
+		do {
+			puts ("Checking Vienna road connections");
+			size_t n_edges;
+			location_t *edges = gv_get_connections (
+				gv, &n_edges,
+				VIENNA, PLAYER_LORD_GODALMING, 0,
+				true, false, false
+			);
+
+			bool seen[NUM_MAP_LOCATIONS] = {false};
+			for (size_t i = 0; i < n_edges; i++)
+				seen[edges[i]] = true;
+
+			assert (n_edges == 5);
+			assert (seen[VIENNA]);
+			assert (seen[PRAGUE]);
+			assert (seen[MUNICH]);
+			assert (seen[BUDAPEST]);
+			assert (seen[ZAGREB])
+
+			free (edges);
+		} while (0);	
+
 		puts ("passed");
 		gv_drop (gv);
 	} while (0);
