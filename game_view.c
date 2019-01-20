@@ -51,6 +51,7 @@ typedef struct game_view {
 
 	cycle *dracula_trail;
 	p_dracula_trail public_dracula_trail[6];
+	bool is_dracula_at_castle;
 
 	play pastPlays[GAME_START_SCORE][NUM_PLAYERS]; 
 
@@ -298,6 +299,8 @@ game_view *gv_new (char *past_plays, player_message messages[])
 		new->public_dracula_trail[i].round = -1;  
 	}
 
+	new->is_dracula_at_castle = false;
+
 	//HUNTER
 	for (int i = 0; i < 4; i++) {
 		new->hunter[i].location = NOWHERE;
@@ -531,6 +534,12 @@ static void remove_malfunctioned_trap (game_view *new, location_t location) {
 		// remove trap from active traps
 		if (new->trap_locations[k] == location) {
 			new->trap_locations[k] = NOWHERE;
+			if (k < 5) {
+				for (int i = k; i + 1 < 6; i++) {
+					new->trap_locations[i] = new->trap_locations[i+1];
+					new->trap_locations[i+1] = NOWHERE;
+				}
+			}
 			break;
 		}
 	}
@@ -672,6 +681,10 @@ static void is_dracula_at_his_castle(game_view *new) {
 		if (new->dracula.health > GAME_START_BLOOD_POINTS) {
 			new->dracula.health = GAME_START_BLOOD_POINTS;
 		}
+		new->is_dracula_at_castle = true;
+		// add his location to public_dracula trail
+	} else {
+		new->is_dracula_at_castle = false;
 	}
 }
 
@@ -691,7 +704,12 @@ static void check_draculas_encounters(game_view *new, char *past_plays, int inde
 		new->vampire_location = new->dracula.location;
 	} 
 	if (past_plays[index+=1] == 'M') {
-		remove_malfunctioned_trap (new, new->dracula.location);
+		for (int i = 0; i < TRAIL_SIZE; i++) {
+			if (new->trap_locations[i] != NOWHERE) {
+				remove_malfunctioned_trap (new, new->trap_locations[i]);
+				break;
+			}
+		}
 	} else if (past_plays[index] == 'V') {
 		new->score -= SCORE_LOSS_VAMPIRE_MATURES;
 		new->vampire_location = NOWHERE;

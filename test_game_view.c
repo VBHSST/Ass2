@@ -224,5 +224,81 @@ int main (void)
 		gv_drop (gv);
 	} while (0);
 
+	// test for 
 	return EXIT_SUCCESS;
+}
+
+void white_box_testing(GameView new) {
+	puts("test1: checking fill_in_hunter");
+	// checking that location_to_id is functioning correctly
+		// checking for a known location
+		// checkig for uknown sea
+		// checking for uknown location
+	// check that dracula and hunter[] structs are filled correctly 
+		// are values as expected
+	// check that past plays is filled correctly after one round (struct_to_pastPlays)
+		// is it empty on rund 0
+		// at the start of round > 0 does pastPlays[round-1] = current structs for hunter and dracula
+
+	// chekcing fill_in_hunter
+	// does hunter_encounters change corresponding values and arrays
+		// T
+			// is trap_locations array updated via remove_malfunction_trap
+			// is health decremented
+			// does health ever go below zero
+		// V
+			// is vampire location set to nowhere
+		// D
+			// is health decrmented for both dracula and hunter
+			// does health never go below 0
+		// .
+			// do all struct variables for the current hunter and dracula stay the same
+
+	//checkig is hunter on draculas trail
+		// if hunter isnt on draculas trail the pblic dracula trail should be empty (-1)
+		// if hunter has stumbled upon draculas trail then the public trail should show
+		// locations dracula travelled to to get to the hunters location
+
+	// checking was hunter resting
+		// checking that health is increased if hunter was resting
+			// checking that health never goes above 9
+		// cehcking that it is the same if the hunter was not
+		// cehcking if other hunters were resting
+			// testing for if hunter is MINA or GODALMING since both trigger different conditions
+				// checking that public dracula trail matches draculas trail if all huhnters were resting
+				//checking that public dracula trail remains unchanged if not all hunters were resting
+
+
+	// checking that after a hunter is reuced to zero health, next round they have 9 health
+		// checking that the score decreases correctly
+	
+	// ----
+
+	// checking fill_in_dracula is functioning correctly
+		// checking that draculas trail is updated correctly/	
+			// is nfilled incremented
+			// is nfilled never above 6
+			// is the new location at the top
+			// is the previous location right below
+
+	// checking is_dracula_at_sea works correctly
+		// checking that if dracula is at sea that health point get taken away 
+		// checking that if dracula doubled back to sea(1-5) then he gets health taken off
+		// chdck that it works for unknown sea and know sea locations
+		
+	// checking is_dracula_at_his_castle
+		// if he is, does health get increased correctly
+			// chekcing health never rises above full (40)
+		// is_dracula_at_castle is set to true?
+		// if he isnt then is_dracula_at_castle set to false
+	
+	// cehck_draculas_encounters
+		// T
+			// check that the corresponding location is added to the trap_locations array
+		// V
+			// check that vampire_location is set to the corresponding location
+		// M
+			// check that a trap has malfunctioned and its corresponding location has been taken out of the array (i.e the very first index
+		// V(2)
+			// check that the score is decremented by the corresponding value
 }

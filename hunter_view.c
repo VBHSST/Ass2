@@ -47,6 +47,7 @@ typedef struct game_view {
 
 	cycle *dracula_trail;
 	p_dracula_trail public_dracula_trail[6];
+	bool is_dracula_at_castle;
 
 	play pastPlays[GAME_START_SCORE][NUM_PLAYERS]; 
 
@@ -123,9 +124,9 @@ location_t *hv_get_dests (
 	hunter_view *hv, size_t *n_locations,
 	bool road, bool rail, bool sea)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
 	*n_locations = 0;
-	return NULL;
+	location_t *conn = gv_get_connections(hv->game, n_locations, gv_get_location(hv->game, gv_get_player(hv->game)), gv_get_player(hv->game), gv_get_round(hv->game), road, rail, sea);
+	return conn;
 }
 
 location_t *hv_get_dests_player (
@@ -134,5 +135,6 @@ location_t *hv_get_dests_player (
 {
 	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
 	*n_locations = 0;
-	return NULL;
+	location_t *conn = gv_get_connections(hv->game, n_locations, gv_get_location(hv->game, player), player, gv_get_round(hv->game), road, rail, sea);
+	return conn;
 }

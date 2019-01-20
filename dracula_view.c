@@ -17,16 +17,7 @@
 #include "game_view.h"
 #include "cycle.h"
 #include "map.h" 
-/*
-typedef struct dracula {
-	int health;
-	location_t location;
-} dracula_struct;
 
-typedef hunter {
-	int health;
-	location_t location;
-} hunter_struct;*/
 typedef struct cycle cycle;
 typedef struct link link;
 
@@ -56,6 +47,7 @@ typedef struct game_view {
 
 	cycle *dracula_trail;
 	p_dracula_trail public_dracula_trail[6];
+	bool is_dracula_at_castle;
 
 	play pastPlays[GAME_START_SCORE][NUM_PLAYERS]; 
 
@@ -79,12 +71,9 @@ typedef struct game_view {
 } game_view;
 
 typedef struct dracula_view {
-	//int round;
-	//int turn; 
-	//dracula_struct dracula;
-	//hunter_struct hunter[4];
 	location_t trap_locations[TRAIL_SIZE];
 	location_t vamp_location;
+
 	// Hunters Structs
 	struct hunt {
 		location_t location;
@@ -218,8 +207,10 @@ void dv_get_trail (
 location_t *dv_get_dests (
 	dracula_view *dv, size_t *n_locations, bool road, bool sea)
 {
+	int rail = false;
 	*n_locations = 0;
-	return NULL;
+	location_t *conn = gv_get_connections(dv->game, n_locations, gv_get_location(dv->game, PLAYER_DRACULA), PLAYER_DRACULA, gv_get_round(dv->game), road, rail, sea);
+	return conn;
 }
 
 location_t *dv_get_dests_player (
@@ -227,7 +218,8 @@ location_t *dv_get_dests_player (
 	bool road, bool rail, bool sea)
 {
 	*n_locations = 0;
-	return NULL;
+	location_t *conn = gv_get_connections(dv->game, n_locations, gv_get_location(dv->game, player), player, gv_get_round(dv->game), road, rail, sea);
+	return conn;
 }
 
 //STATIC FUNCTIONS
