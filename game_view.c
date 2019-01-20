@@ -17,12 +17,13 @@
 #include "game_view.h"
 #include "map.h" 
 #include "queue.h"
+#include "cycle.h"
 
 #define TRUE 1
 #define FALSE 0
 
-typedef struct queue queue;
-typedef struct queue_node queue_node;
+typedef struct cycle cycle;
+typedef struct link link;
 
 typedef struct play {
 	location_t location; 
@@ -34,7 +35,7 @@ typedef struct play {
 typedef struct public_dracula_trail {
 	location_t location;
 	int round;
-} public_dracula_trail;
+} p_dracula_trail;
 
 typedef struct game_view {
 	// round number
@@ -48,8 +49,8 @@ typedef struct game_view {
 
 	location_t trap_locations[6]; 
 
-	queue *dracula_trail;
-	public_dracula_trail public_dracula_trail[6];
+	cycle *dracula_trail;
+	p_dracula_trail public_dracula_trail[6];
 
 	play pastPlays[GAME_START_SCORE][NUM_PLAYERS]; 
 
@@ -72,8 +73,8 @@ typedef struct game_view {
 
 } game_view;
 
+static void print_game(game_view *new);
 static void structs_to_pastPlays(game_view *new);
-
 
 //shared functions
 static location_t char_to_locationID (char *past_plays, int index);
@@ -82,7 +83,9 @@ static void remove_malfunctioned_trap (game_view *new, location_t location);
 //hunter functions
 static void fill_in_hunter(char *past_plays, int index, enum player player, game_view *new);
 	static void was_hunter_resting(game_view *new, enum player player);
+		static void were_all_hunters_resting(game_view *new, enum player player, int last_round);
 	static void check_hunter_encounters(game_view *new, char *past_plays, enum player player, int index);
+	static void is_hunter_on_draculas_trail (game_view *new, enum player player);
 
 //dracula functions
 static void fill_in_dracula(char *past_plays, int index, game_view *new);
@@ -100,7 +103,174 @@ static void BFS(Map map, location_t from, int times, location_t conn[], int i);
 static bool exist (location_t curr, location_t trail[], int index);
 static void array_conn() (Map map, location_t from, location_t conn[], enum player player, round_t round, bool road, bool rail, bool sea);
 */
+static void print_game(game_view *new) {
+	printf("round: %d ", new->round);
+	printf("score: %d\n", new->score);
+	printf("turn: ");
+	switch (new->turn) {
+		case (0): 
+			printf("PLAYER_LORD_GODALMING\n");
+			break;
+		case (1): 
+			printf("PLAYER_DR_SEWARD\n");
+			break;
+		case (2): 
+			printf("PLAYER_VAN_HELSING\n");
+			break;
+		case (3): 
+			printf("PLAYER_MINA_HARKER\n");
+			break;
+		case (4): 
+			printf("PLAYER_DRACULA\n");
+			break;
+		default:
+			break;
+	}
+	puts("");
 
+	printf("vampire location: %s\n", location_get_name(new->vampire_location));
+	puts("");
+	puts("trap locations");
+	for (int i = 0; i < 6; i++) {
+		printf("%d: %s\n", i, location_get_name(new->trap_locations[i]));
+	}
+	puts("");
+
+
+	puts("dracula trail");
+	link *curr = new->dracula_trail->top;
+	int a = 0;
+	do {	
+		printf("%d: %s\n", a, location_get_name(curr->location));
+		curr = curr->next;
+		a++;
+	} while (curr != new->dracula_trail->top);
+	puts("");
+
+	puts("public dracula trail");
+	for (int i = 0; i < 6; i++) {
+		printf("%d: %s\n", i, location_get_name(new->public_dracula_trail[i].location));
+	}
+
+	puts("");
+	puts("HUNTERS");
+	puts("LORD GODALMING:");
+	printf("health: %d\n", new->hunter[0].health);
+
+	puts("DR SEWARD:");
+	printf("health: %d\n", new->hunter[1].health);
+
+	puts("VAN HELSING:");
+	printf("health: %d\n", new->hunter[2].health);
+
+	puts("MINA HARKER:");
+	printf("health: %d\n", new->hunter[3].health);
+
+	puts("DRACULA");
+	printf("health: %d\n", new->dracula.health);
+	puts("");
+
+	for (int i = 0; i < new->round; i++) {
+		for (int j = 0; j < 5; j++) {
+			//printf("i:%d, j:%d\n", i, j);
+			//printf("%d\n", new->pastPlays[i][j].location);
+			switch (j) {
+				case 0:
+					printf("G");
+					printf("%s", location_get_abbrev(new->pastPlays[i][j].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->pastPlays[i][j].encounter[k]);
+					}
+					puts("");
+					break;
+				case 1:
+					printf("S");
+					printf("%s", location_get_abbrev(new->pastPlays[i][j].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->pastPlays[i][j].encounter[k]);
+					}
+					puts("");
+					break;
+				case 2:
+					printf("H");
+					printf("%s", location_get_abbrev(new->pastPlays[i][j].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->pastPlays[i][j].encounter[k]);
+					}
+					puts("");
+					break;
+				case 3:
+					printf("M");
+					printf("%s", location_get_abbrev(new->pastPlays[i][j].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->pastPlays[i][j].encounter[k]);
+					}
+					puts("");
+					break;
+				case 4:
+					printf("D");
+					printf("%s", location_get_abbrev(new->pastPlays[i][j].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->pastPlays[i][j].encounter[k]);
+					}
+					puts("");
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	puts("current round");
+	if (new->turn > 0) {
+		for (int i = 0; i < new->turn; i++) {
+			switch (i) {
+				case(0):
+					printf("G");
+					printf("%s", location_get_abbrev(new->hunter[i].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->hunter[i].encounter[k]);
+					}
+					puts("");
+					break;
+				case(1):
+					printf("S");
+					printf("%s", location_get_abbrev(new->hunter[i].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->hunter[i].encounter[k]);
+					}
+					puts("");
+					break;
+				case(2):
+					printf("H");
+					printf("%s", location_get_abbrev(new->hunter[i].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->hunter[i].encounter[k]);
+					}
+					puts("");
+					break;
+				case(3):
+					printf("M");
+					printf("%s", location_get_abbrev(new->hunter[i].location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->hunter[i].encounter[k]);
+					}
+					puts("");
+					break;
+				case(4):
+					printf("D");
+					printf("%s", location_get_abbrev(new->dracula.location));
+					for (int k = 0; k < 4; k++) {
+						printf("%c", new->dracula.encounter[k]);
+					}
+					puts("");
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	
+}
 game_view *gv_new (char *past_plays, player_message messages[])
 {
 	game_view *new = malloc (sizeof (struct game_view));
@@ -119,7 +289,7 @@ game_view *gv_new (char *past_plays, player_message messages[])
 		new->trap_locations[i] = NOWHERE; 
 	}
 
-	new->dracula_trail = queue_new();
+	new->dracula_trail = cycle_init();
 
 	for (int i = 0; i < 6; i++) {
 		new->public_dracula_trail[i].location = NOWHERE;
@@ -142,10 +312,10 @@ game_view *gv_new (char *past_plays, player_message messages[])
 		if (i != 0) {
 			i++;
 		}
-		printf("turn = %d\n", new->turn);
+		//printf("turn = %d\n", new->turn);
 
 		if (i % 40 == 0 && i != 0) {
-			structs_to_pastPlays(new);	
+			//structs_to_pastPlays(new);	
 		}
 		
 		switch (past_plays[i]) {
@@ -164,15 +334,17 @@ game_view *gv_new (char *past_plays, player_message messages[])
 			default: 
 				fill_in_dracula(past_plays, i+1, new);
 				new->round++;
+				structs_to_pastPlays(new);
 				break;
 		}
 		
 
-	new->score--;
-	new->turn++;
-	new->turn = new->turn % 5;
+		new->score--;
+		new->turn++;
+		new->turn = new->turn % 5;
 	}
 
+	print_game(new);
 	return new;
 }
 
@@ -219,26 +391,34 @@ static location_t char_to_locationID (char *past_plays, int index) {
 
 static void fill_in_hunter(char *past_plays, int index, enum player player, game_view *new) {
 
+	// check if the hunter started this round with 0 health (i.e died last round);
+	if (new->hunter[player].health == 0) new->hunter[player].health = GAME_START_HUNTER_LIFE_POINTS;
+
 	// find and set location
 	new->hunter[player].location = char_to_locationID(past_plays, index);
+
+	// did the hunter stumble across draculas trail
+	is_hunter_on_draculas_trail (new, player);
 	
 	// check the hunters encounters
 	index+=2;
 	check_hunter_encounters(new, past_plays, player, index);
 
-	// check if the hunter died this round
+	// check if the hunter died after his encounters this round
 	if (new->hunter[player].health == 0) new->score -= SCORE_LOSS_HUNTER_HOSPITAL;
-	
-	// check if the hunter was resting
-	was_hunter_resting(new, player);
+	else 
+		// check if the hunter was resting
+		was_hunter_resting(new, player);
 	
 } 
 
 static void check_hunter_encounters(game_view *new, char *past_plays, enum player player, int index) {
-	puts("start");
+	//puts("start");
 	// check for trap on location
-	for (int i = index; past_plays[i] != ' ' && past_plays[i] != '\0'; i++) {
-		printf("char: '%c'\n", past_plays[i]);
+	for (int i = index, j = 0; past_plays[i] != ' ' && past_plays[i] != '\0'; i++, j++) {
+		//printf("char: '%c'\n", past_plays[i]);
+		// add encounter to struct
+		new->hunter[player].encounter[j] = past_plays[i];
 		switch (past_plays[i]) {
 			case 'T': 
 				new->hunter[player].health -= LIFE_LOSS_TRAP_ENCOUNTER;	
@@ -254,17 +434,98 @@ static void check_hunter_encounters(game_view *new, char *past_plays, enum playe
 			default:
 				break;	
 		}
+		if (new->hunter[player].health < 0) new->hunter[player].health = 0;
 	}
+	//puts("end");
+}
+
+//needs testing
+static void is_hunter_on_draculas_trail (game_view *new, enum player player) {
+	location_t gtrail[6] = {-1,-1,-1,-1,-1,-1};
+
+	link *curr = new->dracula_trail->top;
+	int j = 0;
+	do {	
+		gtrail[j] = curr->location;
+		curr = curr->next;
+		j++;
+	} while (curr != new->dracula_trail->top);
+	
+	int end_index = 0;
+	for (int i = 0; i < 6; i++) {
+		if (new->hunter[player].location == gtrail[i] && new->hunter[player].location != NOWHERE) break;
+		end_index++;
+	}
+	//end_index=6;
+
+	if (end_index < 6) {
+		for (int i = 0; i < 6; i++) {
+			if (i <= end_index) {
+				new->public_dracula_trail[i].location = gtrail[i];
+				new->public_dracula_trail[i].round = i;
+			} else {
+				new->public_dracula_trail[i].location = NOWHERE;
+				new->public_dracula_trail[i].round = i;
+			}
+		}
+	}	
 }
 
 static void was_hunter_resting(game_view *new, enum player player) {
 	
-	if (new->round > 0 && new->pastPlays[new->round -1][player].location == new->hunter[player].location) {
-		new->hunter[player].health += LIFE_GAIN_REST;
+	if (new->round > 0 ) {
+		int last_round = new->round - 1;
+
+		if (new->pastPlays[last_round][player].location == new->hunter[player].location) {
+			new->hunter[player].health += LIFE_GAIN_REST;
+			// check if all hunters rested and reveal draculas trail
+			were_all_hunters_resting(new, player, last_round);
+
+		} else if (new->pastPlays[last_round][player].health == 0 && new->hunter[player].location == ST_JOSEPH_AND_ST_MARYS) {
+			new->hunter[player].health += LIFE_GAIN_REST;
+			// check if all hunters rested and reveal draculas trail
+			were_all_hunters_resting(new, player, last_round);
+
+		} else {
+		}
+
 		if (new->hunter[player].health > GAME_START_HUNTER_LIFE_POINTS) {
 			new->hunter[player].health = GAME_START_HUNTER_LIFE_POINTS;
 		}
 	}	
+}
+
+static void were_all_hunters_resting(game_view *new, enum player player, int last_round) {
+	bool all_resting = 1;
+	for (int i = player; i >= 0; i--) {
+		if (i == player) continue;
+		if (new->pastPlays[last_round][i].location != new->hunter[i].location) {
+			all_resting = 0;
+			break;
+		} 
+	}
+	if (all_resting == 1 && player < 4) {
+		if (last_round > 0) {
+			for (int i = 4; i > player; i--) {
+				if (new->pastPlays[last_round][i].location != new->hunter[i].location) {
+					all_resting = 0;
+					break;
+				} 
+			}
+		} else {
+			all_resting = 0;
+		}
+	}
+
+	if (all_resting == 1) {
+		location_t *dtrail = malloc(sizeof(location_t) * 6);
+		gv_get_history(new, PLAYER_DRACULA, dtrail);
+		for (int i = 0; i <= 6; i++) {
+			new->public_dracula_trail[i].location = dtrail[i];
+				new->public_dracula_trail[i].round = i;
+		}
+		free(dtrail);
+	}
 }
 
 static void remove_malfunctioned_trap (game_view *new, location_t location) {
@@ -296,10 +557,7 @@ static void fill_in_dracula(char *past_plays, int index, game_view *new) {
 }
 
 static void enqueue_draculas_new_location_to_trail(game_view *new) {
-	if (new->dracula_trail->n_locations == new->dracula_trail->max_locations) {
-		location_t removed = queue_de(new->dracula_trail);
-	}
-	queue_en(new->dracula_trail, new->dracula.location);
+	cycle_push(new->dracula_trail, new->dracula.location);
 }
 
 static void is_dracula_at_sea (game_view *new) {
@@ -406,6 +664,7 @@ static void is_dracula_at_sea (game_view *new) {
 			}
 			break;
 	}
+	free (dtrail);
 }
 
 static void is_dracula_at_his_castle(game_view *new) {
@@ -419,6 +678,9 @@ static void is_dracula_at_his_castle(game_view *new) {
 }
 
 static void check_draculas_encounters(game_view *new, char *past_plays, int index) {
+	for (int i = 0, j = index+2; i < 4; i++, j++) {
+		new->dracula.encounter[i] = past_plays[j];
+	}
  	if (past_plays[index+=2] == 'T') {	
 		for (int k = 0; k < 6; k++) {
 			if (new->trap_locations[k] == NOWHERE) {
@@ -441,7 +703,7 @@ static void check_draculas_encounters(game_view *new, char *past_plays, int inde
 
 void gv_drop (game_view *gv)
 {
-	queue_drop(gv->dracula_trail);
+	cycle_drop(gv->dracula_trail);
 	free (gv);
 }
 
@@ -471,7 +733,7 @@ int gv_get_health (game_view *gv, enum player player)
 	if (player == PLAYER_DRACULA) {
 		return gv->dracula.health;
 	} else {
-		printf("hunter: %d, health: %d\n", player, gv->hunter[player].health);
+		//printf("hunter: %d, health: %d\n", player, gv->hunter[player].health);
 		return gv->hunter[player].health;
 	}
 }
@@ -511,21 +773,23 @@ void gv_get_history (
 		if (gv->round > 0) {
 			for (int j = i, k = trailSize; (gv->round -j) >= 0 && k < 6; j++, k++) {
 				trail[j] = gv->pastPlays[gv->round - i][player].location;
-				puts("plsu1");
+				//puts("plsu1");
 			}
-			for (int k = 0; k < 6; k++) {
+			/*for (int k = 0; k < 6; k++) {
 				printf("trail[%d] = %s\n", k, location_get_name(trail[k]));
-			}
+			}*/
 		}
 		
 	} else {
 		i = 0;
 		if (player == PLAYER_DRACULA) {
 			i = 0;
-			for (queue_node *curr = gv->dracula_trail->head; curr != NULL; curr = curr->next) {
-				trail[gv->dracula_trail->n_locations -1-i] = curr->location;
+			link *curr = gv->dracula_trail->top;
+			do {	
+				trail[i] = curr->location;
+				curr = curr->next;
 				i++;
-			}
+			} while (curr != gv->dracula_trail->top);
 		} else {
 			if (gv->round > 0) {
 				for (int j = i, k = trailSize; (gv->round -1 -j) >= 0 && k < 6; j++, k++) {
