@@ -95,14 +95,16 @@ static void fill_in_dracula(char *past_plays, int index, game_view *new);
 	static void check_draculas_encounters(game_view *new, char *past_plays, int index);
 
 // map functions 
-/*
+
 static location_t new_from(location_t location[], int i);
 static bool loc_unknown (location_t loc);
-static int num_conn(Map g, LocationID start, PlayerID player, Round round, bool road, bool rail, bool sea);
-static void BFS(Map map, location_t from, int times, location_t conn[], int i);
+static int num_conn(Map map, location_t from, 
+	enum player player, round_t round, 
+	bool road, bool rail, bool sea);
+//static void BFS(Map map, location_t from, int times, location_t conn[], int i);
 static bool exist (location_t curr, location_t trail[], int index);
-static void array_conn() (Map map, location_t from, location_t conn[], enum player player, round_t round, bool road, bool rail, bool sea);
-*/
+static void array_conn (Map map, location_t from, location_t conn[], enum player player, round_t round, bool road, bool rail, bool sea);
+
 static void print_game(game_view *new) {
 	printf("round: %d ", new->round);
 	printf("score: %d\n", new->score);
@@ -313,10 +315,6 @@ game_view *gv_new (char *past_plays, player_message messages[])
 			i++;
 		}
 		//printf("turn = %d\n", new->turn);
-
-		if (i % 40 == 0 && i != 0) {
-			//structs_to_pastPlays(new);	
-		}
 		
 		switch (past_plays[i]) {
 			case 'G': 
@@ -504,10 +502,10 @@ static void were_all_hunters_resting(game_view *new, enum player player, int las
 			break;
 		} 
 	}
-	if (all_resting == 1 && player < 4) {
+	if (all_resting == 1 && player < 3) {
 		if (last_round > 0) {
-			for (int i = 4; i > player; i--) {
-				if (new->pastPlays[last_round][i].location != new->hunter[i].location) {
+			for (int i = 3; i > player; i--) {
+				if (new->pastPlays[last_round][i].location != new->pastPlays[last_round-1][i].location) {
 					all_resting = 0;
 					break;
 				} 
@@ -520,7 +518,7 @@ static void were_all_hunters_resting(game_view *new, enum player player, int las
 	if (all_resting == 1) {
 		location_t *dtrail = malloc(sizeof(location_t) * 6);
 		gv_get_history(new, PLAYER_DRACULA, dtrail);
-		for (int i = 0; i <= 6; i++) {
+		for (int i = 0; i < 6; i++) {
 			new->public_dracula_trail[i].location = dtrail[i];
 				new->public_dracula_trail[i].round = i;
 		}
@@ -772,12 +770,12 @@ void gv_get_history (
 
 		if (gv->round > 0) {
 			for (int j = i, k = trailSize; (gv->round -j) >= 0 && k < 6; j++, k++) {
-				trail[j] = gv->pastPlays[gv->round - i][player].location;
+				trail[j] = gv->pastPlays[gv->round - j][player].location;
 				//puts("plsu1");
 			}
-			/*for (int k = 0; k < 6; k++) {
+			for (int k = 0; k < 6; k++) {
 				printf("trail[%d] = %s\n", k, location_get_name(trail[k]));
-			}*/
+			}
 		}
 		
 	} else {
@@ -793,7 +791,7 @@ void gv_get_history (
 		} else {
 			if (gv->round > 0) {
 				for (int j = i, k = trailSize; (gv->round -1 -j) >= 0 && k < 6; j++, k++) {
-					trail[j] = gv->pastPlays[gv->round -1 - i][player].location;
+					trail[j] = gv->pastPlays[gv->round -1 - j][player].location;
 				}
 			}
 		}
@@ -807,9 +805,7 @@ location_t *gv_get_connections (
 {
 	if (gv == NULL) return NULL;
 
-	*n_locations = 0;
-	return NULL;
-	/*
+	
 	// if player is out of range
 	if (player < 0 || player > 4) return NULL;
 	if (round > gv_get_round(gv)) return NULL;
@@ -817,25 +813,32 @@ location_t *gv_get_connections (
 	Map map = map_new();
 
 	// if the place is unknown
-	if (from < Adriatic_Sea || from > ZURICH) {
+	if (from < ADRIATIC_SEA || from > ZURICH) {
 		// update the place, starts from most recent one (ZERO)
-		from = new_from(gv->pastPlays[round][player].location, 0);
+		location_t *ptrail = malloc(sizeof(location_t) * TRAIL_SIZE);
+		gv_get_history(gv, player, ptrail);
+		from = new_from(ptrail, 0);
 	}
 
-	*n_locations = num_conn(map, from, player, round, road, rail, sea);
-	location_t *conn = malloc(sizeof(location_t) * (*n_locations));
+	if (from < ADRIATIC_SEA || from > ZURICH) {
+		*n_locations = 0;
+		return NULL;
+	} else {
+		*n_locations = num_conn(map, from, player, round, road, rail, sea);
+		location_t *conn = malloc(sizeof(location_t) * (*n_locations));
 
-	for (int i = 0; i < (*n_locations); i++) {
-		conn[i] = NOWHERE;
+		for (int i = 0; i < (*n_locations); i++) {
+			conn[i] = NOWHERE;
+		}
+
+		array_conn(map, from, conn, player, round, road, rail, sea);
+		map_drop(map);
+
+	return conn;
 	}
-
-	array_conn(map, from, conn, player, round, road, rail, sea);
-	map_drop(map);
-
-	return conn;*/
 }
 
-/*
+
 // help functions
 
 // Give the new location if the current one is out of range
@@ -843,7 +846,7 @@ static location_t new_from(location_t location[], int i) {
 	location_t temp = location[i];
 
 	// if the location is unknown, make a new one according to cases
-	if (temp < Adriatic_Sea || temp > ZURICH) {
+	if (temp < ADRIATIC_SEA || temp > ZURICH) {
 		switch (temp){
 			case HIDE:
 				if(! loc_unknown(location[i+1])) 
@@ -886,7 +889,7 @@ static int num_conn(Map map, location_t from,
 	assert(map != NULL);
 
 	int i = 0;
-	if (from < Adriatic_Sea || from > ZURICH) {
+	if (from < ADRIATIC_SEA || from > ZURICH) {
 		return 0;
 	}
 
@@ -908,7 +911,7 @@ static int num_conn(Map map, location_t from,
                 conn[i++] = curr->v;
                 for (map_adj *curr2 = map->connections[conn[i-1]]; curr2!=NULL; curr2 = curr2->next) {
                     if (curr2->type == BOAT) {
-                        conn[i] = curr2->v;
+                        conn[i] = curr2->v; //shouldnt this be i++?
                     }
                 }
             }
@@ -922,7 +925,7 @@ static int num_conn(Map map, location_t from,
                 conn[i++] = curr->v;
             }
             if (rail == true && curr->type == RAIL) {
-                BFS(map, curr->v, rails, conn, i);
+                //BFS(map, curr->v, rails, conn, i); //just commenting this out as its not fully implemented
             }
             if (sea == true && 
             	curr->type == BOAT &&
@@ -942,7 +945,7 @@ static int num_conn(Map map, location_t from,
     }
     return i;
 }
-
+/*
 static void BFS(Map map, location_t from, int times, location_t conn[], int i) {
     Queue q = newQueue();
     QueueJoin(q, from);
@@ -975,7 +978,7 @@ static bool exist (location_t curr, location_t trail[], int index) {
         if (curr == trail[index]) return TRUE;
     }
     return FALSE;
-}
+}*/
 
 static void array_conn (Map map, location_t from, 
 	location_t conn[], enum player player, round_t round, 
@@ -984,7 +987,7 @@ static void array_conn (Map map, location_t from,
 	assert(map != NULL);
 
 	int i = 0;
-	if (from < Adriatic_Sea || from > ZURICH) {
+	if (from < ADRIATIC_SEA || from > ZURICH) {
 		return;
 	}
 
@@ -1016,7 +1019,7 @@ static void array_conn (Map map, location_t from,
                 conn[i++] = curr->v;
             }
             if (rail == true && curr->type == RAIL) {
-                BFS(map, curr->v, rails, conn, i);
+                //BFS(map, curr->v, rails, conn, i);
             }
             if (sea == true && 
             	curr->type == BOAT && 
@@ -1034,4 +1037,4 @@ static void array_conn (Map map, location_t from,
             }
         }
     }
-}*/
+}

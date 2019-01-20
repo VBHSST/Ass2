@@ -15,62 +15,108 @@
 #include "game.h"
 #include "game_view.h"
 #include "hunter_view.h"
-// #include "map.h" ... if you decide to use the Map ADT
+#include "cycle.h"
+#include "map.h" 
 
+typedef struct cycle cycle;
+typedef struct link link;
+
+typedef struct play {
+	location_t location; 
+	int health;
+	char encounter[4]; // max 4 for hunters
+	//char message[MESSAGE_SIZE]; // max 100
+} play;
+
+typedef struct public_dracula_trail {
+	location_t location;
+	int round;
+} p_dracula_trail;
+
+typedef struct game_view {
+	// round number
+	round_t round; 
+	// point score;
+	int score;
+	// player turn 
+	enum player turn;
+
+	location_t vampire_location;
+
+	location_t trap_locations[6]; 
+
+	cycle *dracula_trail;
+	p_dracula_trail public_dracula_trail[6];
+
+	play pastPlays[GAME_START_SCORE][NUM_PLAYERS]; 
+
+	// Hunters Structs
+	struct hunter {
+		location_t location;
+		int health;
+		char encounter[4];
+		//char message[MESSAGE_SIZE];
+	} hunter[4];
+
+	// Dracula struct
+	struct dracula {
+		location_t location;
+		int health;
+		char encounter[4];
+	} dracula;
+
+	//Map map; // need to figure out how to initialize this map in this file
+
+} game_view;
 typedef struct hunter_view {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+	game_view *game;
 } hunter_view;
 
 hunter_view *hv_new (char *past_plays, player_message messages[])
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
 	hunter_view *new = malloc (sizeof *new);
 	if (new == NULL) err (EX_OSERR, "couldn't allocate HunterView");
-
+	new->game = gv_new(past_plays, messages);
+	
 	return new;
 }
 
 void hv_drop (hunter_view *hv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+	gv_drop(hv->game);
 	free (hv);
 }
 
 round_t hv_get_round (hunter_view *hv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv_get_round(hv->game);;
 }
 
 enum player hv_get_player (hunter_view *hv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv_get_player(hv->game);
 }
 
 int hv_get_score (hunter_view *hv)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv_get_score(hv->game);
 }
 
 int hv_get_health (hunter_view *hv, enum player player)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv_get_health(hv->game, player);
 }
 
 location_t hv_get_location (hunter_view *hv, enum player player)
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-	return 0;
+	return gv_get_location(hv->game, player);
 }
 
 void hv_get_trail (
 	hunter_view *hv, enum player player,
 	location_t trail[TRAIL_SIZE])
 {
-	/// @todo REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+	gv_get_history(hv->game, player, trail);
 }
 
 location_t *hv_get_dests (
